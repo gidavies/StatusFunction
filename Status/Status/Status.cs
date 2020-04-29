@@ -7,13 +7,17 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using System.Net.Http;
+using System.Net;
+using System.Text;
+using System.Collections.Generic;
 
 namespace Status
 {
     public static class GetStatus
     {
         [FunctionName("GetStatus")]
-        public static async Task<IActionResult> Run(
+        public static async Task<HttpResponseMessage> Run(
             [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)] HttpRequest req,
             ILogger log)
         {
@@ -33,9 +37,13 @@ namespace Status
             Random r = new Random();
             int rInt = r.Next(ratings.Length);
 
-            return name != null
-                ? (ActionResult)new OkObjectResult(ratings[rInt])
-                : new BadRequestObjectResult("Please pass a name to rate on the query string or in the request body");
+            Dictionary<string, string> resp = new Dictionary<string, string>();
+            resp.Add("status", ratings[rInt]);
+
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(JsonConvert.SerializeObject(resp), Encoding.UTF8, "application/json")
+            }; 
         }
     }
 }
